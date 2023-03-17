@@ -1,43 +1,48 @@
 import { activeObserver, Observer } from './observer';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const RefSymbol = Symbol('ref');
+const REF_SYMBOL = Symbol('ref');
 
 export interface Ref<T = any> {
   value: T;
-  [RefSymbol]: true;
+  [REF_SYMBOL]: true;
 }
 
 export function isRef<T>(value: any): value is Ref<T> {
-  return value !== undefined && value[RefSymbol] === true;
+  return value !== undefined && value[REF_SYMBOL] === true;
 }
 
-/**
- * Creates a reactive reference.
- * @param value - Initial value of the ref.
- */
-export function ref<T = any>(value: T): Ref<T> {
+export function ref<T = any>(initialValue: T): Ref<T> {
   let observers: Observer[] = [];
-  let _value = value;
-  const _ref = { [RefSymbol]: true };
+  let value = initialValue;
 
-  return Object.defineProperty(_ref, 'value', {
+  function detach(observer: Observer) {
+    observers = observers.filter((subscriber) => subscriber !== observer);
+  }
+
+  function attach(observer: Observer) {
+    if (!observers.find((_observer) => _observer === observer)) {
+      observers = [...observers, observer];
+      observer.onStop(() => {
+        detach(observer);
+      });
+    }
+  }
+
+  function notify() {
+    observers.forEach((observer) => observer.update());
+  }
+
+  return Object.defineProperty({ [REF_SYMBOL]: true }, 'value', {
     get(): T {
       const observer = activeObserver.get();
+      if (observer) attach(observer);
 
-      if (observer && !observers.find((_observer) => _observer === observer)) {
-        observers = [...observers, observer];
-        observer.onStop(() => {
-          observers = observers.filter((subscriber) => subscriber !== observer);
-        });
-      }
-
-      return _value;
+      return value;
     },
 
     set(newValue: T) {
-      _value = newValue;
-      observers.forEach((subscriber) => subscriber.update());
+      value = newValue;
+      notify();
     },
   }) as Ref<T>;
 }

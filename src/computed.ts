@@ -1,16 +1,15 @@
 import { createObserver } from './observer';
 import { ref } from './ref';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const ComputedRefSymbol = Symbol('computedRef');
+const COMPUTED_REF_SYMBOL = Symbol('computedRef');
 
 export interface ComputedRef<T> {
   readonly value: T;
-  [ComputedRefSymbol]: true;
+  [COMPUTED_REF_SYMBOL]: true;
 }
 
 export function isComputedRef<T>(value: any): value is ComputedRef<T> {
-  return value !== undefined && value[ComputedRefSymbol] === true;
+  return value !== undefined && value[COMPUTED_REF_SYMBOL] === true;
 }
 
 export function computed<T>(getter: () => T): ComputedRef<T> {
@@ -23,7 +22,7 @@ export function computed<T>(getter: () => T): ComputedRef<T> {
   const observer = createObserver(update);
   observer.update();
 
-  return Object.defineProperty({}, 'value', {
+  return Object.defineProperty({ [COMPUTED_REF_SYMBOL]: true }, 'value', {
     get() {
       return computedRef.value;
     },
