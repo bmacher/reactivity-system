@@ -7,4 +7,8 @@ module.exports = {
   extends: [
     '@bmacher/eslint-config-typescript',
   ],
+
+  rules: {
+    'no-underscore-dangle': 'off',
+  },
 };
