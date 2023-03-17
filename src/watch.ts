@@ -1,5 +1,5 @@
 import { ComputedRef, isComputedRef } from './computed';
-import { createContext, globalContext } from './context';
+import { createObserver } from './observer';
 import { isRef, Ref } from './ref';
 import { UnWatch } from './types';
 
@@ -16,8 +16,8 @@ export function watch<T>(source: WatchSource<T>, cb: WatchCallback<T>): UnWatch 
     cb(_value, oldValue);
   }
 
-  const context = createContext(update);
-  globalContext.update(context);
+  const observer = createObserver(update);
+  observer.update();
 
-  return () => context.stop();
+  return () => observer.stop();
 }

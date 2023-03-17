@@ -1,13 +1,14 @@
-import { createContext, globalContext } from './context';
+import { createObserver } from './observer';
 import { UnWatch } from './types';
 
 type WatchEffect = () => void;
+
 /**
  *
  */
 export function watchEffect(effect: WatchEffect): UnWatch {
-  const context = createContext(effect);
-  globalContext.update(context);
+  const observer = createObserver(effect);
+  observer.update();
 
-  return () => context.stop();
+  return () => observer.stop();
 }

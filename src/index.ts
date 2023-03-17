@@ -13,5 +13,6 @@ watchEffect(() => console.info(doubledCount.value));
 count.value += 1;
 count.value += 1;
 message.value = '!dlroW olleH';
-count.value += 1;
 message.value = 'Hello World again!';
+count.value -= 1;
+count.value -= 1;

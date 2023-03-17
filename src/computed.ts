@@ -1,4 +1,4 @@
-import { createContext, globalContext } from './context';
+import { createObserver } from './observer';
 import { ref } from './ref';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -20,8 +20,8 @@ export function computed<T>(getter: () => T): ComputedRef<T> {
     computedRef.value = getter();
   }
 
-  const context = createContext(update);
-  globalContext.update(context);
+  const observer = createObserver(update);
+  observer.update();
 
   return Object.defineProperty({}, 'value', {
     get() {

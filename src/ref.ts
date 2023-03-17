@@ -1,4 +1,4 @@
-import { Context, globalContext } from './context';
+import { activeObserver, Observer } from './observer';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const RefSymbol = Symbol('ref');
@@ -17,21 +17,19 @@ export function isRef<T>(value: any): value is Ref<T> {
  * @param value - Initial value of the ref.
  */
 export function ref<T = any>(value: T): Ref<T> {
-  let subscribers: Context[] = [];
+  let observers: Observer[] = [];
   let _value = value;
   const _ref = { [RefSymbol]: true };
 
   return Object.defineProperty(_ref, 'value', {
     get(): T {
-      const context = globalContext.get();
+      const observer = activeObserver.get();
 
-      if (context) {
-        if (!subscribers.find((subscriber) => subscriber === context)) {
-          subscribers = [...subscribers, context];
-          context.onStop(() => {
-            subscribers = subscribers.filter((subscriber) => subscriber !== context);
-          });
-        }
+      if (observer && !observers.find((_observer) => _observer === observer)) {
+        observers = [...observers, observer];
+        observer.onStop(() => {
+          observers = observers.filter((subscriber) => subscriber !== observer);
+        });
       }
 
       return _value;
@@ -39,7 +37,7 @@ export function ref<T = any>(value: T): Ref<T> {
 
     set(newValue: T) {
       _value = newValue;
-      subscribers.forEach((subscriber) => globalContext.update(subscriber));
+      observers.forEach((subscriber) => subscriber.update());
     },
   }) as Ref<T>;
 }
