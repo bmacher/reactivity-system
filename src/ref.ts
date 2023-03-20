@@ -11,38 +11,47 @@ export function isRef<T>(value: any): value is Ref<T> {
   return value !== undefined && value[REF_SYMBOL] === true;
 }
 
-export function ref<T = any>(initialValue: T): Ref<T> {
-  let observers: Observer[] = [];
-  let value = initialValue;
+class RefImpl<T> {
+  public readonly [REF_SYMBOL] = true;
 
-  function detach(observer: Observer) {
-    observers = observers.filter((subscriber) => subscriber !== observer);
+  private internalValue: T;
+
+  private observers: Observer[] = [];
+
+  constructor(initialValue: T) {
+    this.internalValue = initialValue;
   }
 
-  function attach(observer: Observer) {
-    if (!observers.find((_observer) => _observer === observer)) {
-      observers = [...observers, observer];
+  private detach(observer: Observer) {
+    this.observers = this.observers.filter((_observer) => _observer !== observer);
+  }
+
+  private attach(observer: Observer) {
+    if (!this.observers.find((_observer) => _observer === observer)) {
+      this.observers = [...this.observers, observer];
       observer.onStop(() => {
-        detach(observer);
+        this.detach(observer);
       });
     }
   }
 
-  function notify() {
-    observers.forEach((observer) => observer.update());
+  private notify() {
+    this.observers.forEach((observer) => observer.update());
   }
 
-  return Object.defineProperty({ [REF_SYMBOL]: true }, 'value', {
-    get(): T {
-      const observer = activeObserver.get();
-      if (observer) attach(observer);
+  get value(): T {
+    const observer = activeObserver.get();
+    if (observer) this.attach(observer);
 
-      return value;
-    },
+    return this.internalValue;
+  }
 
-    set(newValue: T) {
-      value = newValue;
-      notify();
-    },
-  }) as Ref<T>;
+  set value(value: T) {
+    this.internalValue = value;
+    this.notify();
+  }
+}
+
+export function ref<T = any>(initialValue: T): Ref<T> {
+  return new RefImpl(initialValue);
 }

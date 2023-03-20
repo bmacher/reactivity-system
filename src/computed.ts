@@ -8,23 +8,33 @@ export interface ComputedRef<T> {
   [COMPUTED_REF_SYMBOL]: true;
 }
 
+type ComputedGetter<T> = () => T;
+
 export function isComputedRef<T>(value: any): value is ComputedRef<T> {
   return value !== undefined && value[COMPUTED_REF_SYMBOL] === true;
 }
 
-export function computed<T>(getter: () => T): ComputedRef<T> {
-  const computedRef = ref<T | undefined>(undefined);
+class ComputedImpl<T> {
+  public readonly [COMPUTED_REF_SYMBOL] = true;
 
-  function update() {
-    computedRef.value = getter();
+  private internalValue = ref<T | undefined>(undefined);
+
+  constructor(
+    private readonly getter: ComputedGetter<T>,
+  ) {
+    const observer = createObserver(this.update);
+    observer.update();
   }
 
-  const observer = createObserver(update);
-  observer.update();
+  private readonly update = () => {
+    this.internalValue.value = this.getter();
+  };
 
-  return Object.defineProperty({ [COMPUTED_REF_SYMBOL]: true }, 'value', {
-    get() {
-      return computedRef.value;
-    },
-  }) as ComputedRef<T>;
+  get value(): T {
+    return this.internalValue.value as T;
+  }
+}
+
+export function computed<T>(getter: ComputedGetter<T>): ComputedRef<T> {
+  return new ComputedImpl<T>(getter);
 }
