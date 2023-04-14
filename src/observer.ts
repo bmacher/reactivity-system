@@ -29,8 +29,8 @@ function createActiveObserver(): ActiveObserver {
       return _observer;
     },
 
-    set(context) {
-      _observer = context;
+    set(observer) {
+      _observer = observer;
     },
   };
 }

@@ -22,13 +22,13 @@ class ComputedImpl<T> {
   constructor(
     private readonly getter: ComputedGetter<T>,
   ) {
-    const observer = createObserver(this.update);
+    const observer = createObserver(() => this.update());
     observer.update();
   }
 
-  private readonly update = () => {
+  private update() {
     this.internalValue.value = this.getter();
-  };
+  }
 
   get value(): T {
     return this.internalValue.value as T;
